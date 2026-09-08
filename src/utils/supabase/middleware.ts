@@ -29,24 +29,43 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+const {
+  data: { user },
+} = await supabase.auth.getUser();
 
-  const isLoginPage = request.nextUrl.pathname.startsWith('/login');
-  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard');
+console.log('--- MIDDLEWARE RUN ---', {
+  path: request.nextUrl.pathname,
+  hasUser: !!user,
+});
 
-  if (!user && isDashboardPage) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
+const isLoginPage = request.nextUrl.pathname.startsWith('/login');
+const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard');
 
-  if (user && isLoginPage) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
-  }
+if (!user && isDashboardPage) {
+  const url = request.nextUrl.clone();
+  url.pathname = '/login';
+  const redirectResponse = NextResponse.redirect(url);
+  
+  // Copy all updated cookies from supabaseResponse to the redirect response
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+  });
 
-  return supabaseResponse;
+  return redirectResponse;
+}
+
+if (user && isLoginPage) {
+  const url = request.nextUrl.clone();
+  url.pathname = '/dashboard';
+  const redirectResponse = NextResponse.redirect(url);
+
+  // Copy all updated cookies from supabaseResponse to the redirect response
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+  });
+
+  return redirectResponse;
+}
+
+return supabaseResponse;
 }

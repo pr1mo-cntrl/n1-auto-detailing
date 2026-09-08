@@ -5,6 +5,7 @@ import { getVehiclesByCustomerId } from '@/lib/data/vehicles';
 import EditCustomerModal from '@/components/customers/EditCustomerModal';
 import AddVehicleModal from '@/components/vehicles/AddVehicleModal';
 import EditVehicleModal from '@/components/vehicles/EditVehicleModal';
+import VehicleJobAction from '@/components/vehicles/VehicleJobAction';
 import { ArrowLeft, User, Phone, Calendar, Car, Hash } from 'lucide-react';
 import type { VehicleSize } from '@/types/database';
 
@@ -102,9 +103,9 @@ export default async function CustomerDetailPage({ params }: PageProps) {
             {vehicles.map((vehicle) => (
               <div
                 key={vehicle.id}
-                className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 hover:border-neutral-700 transition-colors shadow-sm"
+                className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 hover:border-neutral-700 transition-colors shadow-sm flex flex-col justify-between gap-4"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className="text-base font-semibold text-neutral-100">
                       {vehicle.make} {vehicle.model}
@@ -120,14 +121,16 @@ export default async function CustomerDetailPage({ params }: PageProps) {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${sizeBadgeColors[vehicle.size]}`}
-                    >
-                      {vehicle.size}
-                    </span>
-                    <EditVehicleModal vehicle={vehicle} />
-                  </div>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${sizeBadgeColors[vehicle.size]}`}
+                  >
+                    {vehicle.size}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-neutral-800/80">
+                  <EditVehicleModal vehicle={vehicle} />
+                  <VehicleJobAction vehicle={vehicle} customerName={customer.name} />
                 </div>
               </div>
             ))}
