@@ -17,7 +17,7 @@ export default function VehicleJobAction({ vehicle, customerName }: VehicleJobAc
       <button
         onClick={() => setIsOpen(true)}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-        title={`Initiate job intake for ${vehicle.make} ${vehicle.model}`}
+        title={`Prepare job intake for ${vehicle.make} ${vehicle.model}`}
       >
         <Play className="w-3.5 h-3.5 fill-current" />
         <span>Create Job</span>
@@ -58,7 +58,7 @@ export default function VehicleJobAction({ vehicle, customerName }: VehicleJobAc
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Tier / Classification:</span>
+                  <span className="text-neutral-500">Size Tier:</span>
                   <span className="font-semibold text-emerald-400">{vehicle.size}</span>
                 </div>
               </div>
@@ -66,8 +66,7 @@ export default function VehicleJobAction({ vehicle, customerName }: VehicleJobAc
               <div className="flex items-start gap-2.5 p-3 rounded-lg bg-neutral-800/50 border border-neutral-700/60 text-neutral-300 text-xs">
                 <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <p>
-                  The Job intake and Queue module is scheduled for implementation in the next phase.
-                  This vehicle is configured and ready to be assigned services and pricing tiers.
+                  Prepare this vehicle for job intake in the upcoming Jobs module. Service selection, pricing matrices, and queue tracking will be implemented in Step 4.
                 </p>
               </div>
 

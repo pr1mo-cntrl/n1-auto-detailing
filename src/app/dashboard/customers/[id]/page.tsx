@@ -23,13 +23,22 @@ const sizeBadgeColors: Record<VehicleSize, string> = {
 
 export default async function CustomerDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const customer = await getCustomerById(id);
+
+  let customer = null;
+  let vehicles: Awaited<ReturnType<typeof getVehiclesByCustomerId>> = [];
+
+  try {
+    customer = await getCustomerById(id);
+    if (customer) {
+      vehicles = await getVehiclesByCustomerId(id);
+    }
+  } catch {
+    notFound();
+  }
 
   if (!customer) {
     notFound();
   }
-
-  const vehicles = await getVehiclesByCustomerId(id);
 
   return (
     <div className="space-y-6">
@@ -52,7 +61,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
             </div>
             <div>
               <h1 className="text-xl font-bold text-neutral-100">{customer.name}</h1>
-              <p className="text-xs text-neutral-500">ID: {customer.id}</p>
+              <p className="text-xs text-neutral-500 font-mono">ID: {customer.id}</p>
             </div>
           </div>
           <EditCustomerModal customer={customer} />
@@ -63,7 +72,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
             <Phone className="w-4 h-4 text-neutral-500" />
             <span className="text-xs text-neutral-500 uppercase tracking-wider">Contact:</span>
             <span className="font-medium text-neutral-200">
-              {customer.contact_number || <span className="italic text-neutral-500">Unspecified</span>}
+              {customer.contact_number || <span className="italic text-neutral-500 font-normal">Unspecified</span>}
             </span>
           </div>
 
@@ -95,7 +104,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
             <Car className="w-8 h-8 mx-auto text-neutral-600 mb-2" />
             <h3 className="text-sm font-medium text-neutral-300">No vehicles registered yet</h3>
             <p className="text-xs text-neutral-500 mt-1">
-              Add this customer&apos;s vehicle to start queuing jobs and assigning services.
+              This customer has no registered vehicles. Register a vehicle to prepare for service intake.
             </p>
           </div>
         ) : (

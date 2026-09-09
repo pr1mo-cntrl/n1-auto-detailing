@@ -3,33 +3,36 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createCustomer } from '@/actions/customers';
-import { Plus, X, Loader2 } from 'lucide-react';
+import { UserPlus, X, Loader2 } from 'lucide-react';
 
 export default function AddCustomerModal() {
   const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-
-    const payload = {
-      name: formData.get('name') as string,
-      contact_number: formData.get('contact_number') as string,
-    };
 
     startTransition(async () => {
-      const result = await createCustomer(payload);
-      if (result.success && result.data) {
-        setIsOpen(false);
-        form.reset();
+      const result = await createCustomer({
+        name,
+        contact_number: contactNumber || null,
+      });
+
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+
+      setIsOpen(false);
+      setName('');
+      setContactNumber('');
+      if (result.data) {
         router.push(`/dashboard/customers/${result.data.id}`);
-      } else {
-        setError(result.error || 'Failed to create customer');
       }
     });
   };
@@ -38,9 +41,9 @@ export default function AddCustomerModal() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-lg font-medium text-sm transition-colors shadow-sm cursor-pointer"
+        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-xs cursor-pointer"
       >
-        <Plus className="w-4 h-4" />
+        <UserPlus className="w-4 h-4" />
         <span>Add Customer</span>
       </button>
 
@@ -48,11 +51,11 @@ export default function AddCustomerModal() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
           <div className="bg-neutral-900 border border-neutral-800 rounded-xl w-full max-w-md overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
-              <h2 className="text-lg font-semibold text-neutral-100">New Customer Profile</h2>
+              <h3 className="text-base font-semibold text-neutral-100">Add New Customer</h3>
               <button
-                onClick={() => !isPending && setIsOpen(false)}
-                className="text-neutral-400 hover:text-neutral-200"
+                onClick={() => setIsOpen(false)}
                 disabled={isPending}
+                className="text-neutral-400 hover:text-neutral-200 cursor-pointer disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -60,35 +63,37 @@ export default function AddCustomerModal() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {error && (
-                <div className="p-3 text-sm text-rose-400 bg-rose-950/50 border border-rose-800 rounded-lg">
+                <div className="p-3 text-xs bg-red-950/60 border border-red-800 text-red-300 rounded-lg">
                   {error}
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1.5">
-                  Customer Name *
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-neutral-300">
+                  Full Name <span className="text-red-400">*</span>
                 </label>
                 <input
-                  name="name"
                   type="text"
                   required
-                  placeholder="e.g., Juan Dela Cruz"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   disabled={isPending}
-                  className="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-neutral-100 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  placeholder="e.g. John Doe"
+                  className="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-hidden focus:border-neutral-600 disabled:opacity-50"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1.5">
-                  Contact Number
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-neutral-300">
+                  Contact Number <span className="text-neutral-500 font-normal">(Optional)</span>
                 </label>
                 <input
-                  name="contact_number"
-                  type="text"
-                  placeholder="e.g., 0917 123 4567"
+                  type="tel"
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
                   disabled={isPending}
-                  className="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-neutral-100 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  placeholder="e.g. 09171234567"
+                  className="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-hidden focus:border-neutral-600 disabled:opacity-50"
                 />
               </div>
 
@@ -97,17 +102,23 @@ export default function AddCustomerModal() {
                   type="button"
                   onClick={() => setIsOpen(false)}
                   disabled={isPending}
-                  className="px-4 py-2 text-sm text-neutral-300 hover:text-white rounded-lg border border-neutral-800 hover:bg-neutral-800 cursor-pointer"
+                  className="px-4 py-2 text-xs font-medium text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Save Customer
+                  {isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Customer</span>
+                  )}
                 </button>
               </div>
             </form>
