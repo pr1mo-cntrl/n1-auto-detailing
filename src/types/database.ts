@@ -148,3 +148,15 @@ export interface Database {
     };
   };
 }
+
+export type PaymentMethod = 'CASH' | 'GCASH' | 'CARD' | 'BANK_TRANSFER';
+
+export interface Payment {
+  id: string;
+  job_id: string;
+  amount: number;
+  payment_method: PaymentMethod;
+  recorded_by: string;
+  paid_at: string;
+  created_at: string;
+} 
