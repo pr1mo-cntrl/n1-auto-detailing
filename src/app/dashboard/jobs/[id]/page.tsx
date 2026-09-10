@@ -5,7 +5,7 @@ import { getJobById } from '@/lib/data/jobs';
 import { getActiveServices } from '@/lib/data/services';
 import JobStatusTransitions from '@/components/jobs/JobStatusTransitions';
 import JobServicesManager from '@/components/jobs/JobServicesManager';
-import { ArrowLeft, Clock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Clock, AlertCircle, Tablet, CheckCircle2 } from 'lucide-react';
 import type { UserRole } from '@/types/database';
 
 interface JobDetailPageProps {
@@ -64,24 +64,36 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard/jobs"
-          className="p-2 bg-neutral-900 border border-neutral-800 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold text-neutral-100 flex items-center gap-3">
-            <span>Job #{job.id.slice(0, 8)}</span>
-            <span className="text-xs px-2.5 py-0.5 rounded font-mono font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">
-              {job.job_status}
-            </span>
-          </h1>
-          <p className="text-xs text-neutral-400 mt-0.5">
-            Registered: {new Date(job.created_at).toLocaleString()}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/jobs"
+            className="p-2 bg-neutral-900 border border-neutral-800 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold text-neutral-100 flex items-center gap-3">
+              <span>Job #{job.id.slice(0, 8)}</span>
+              <span className="text-xs px-2.5 py-0.5 rounded font-mono font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">
+                {job.job_status}
+              </span>
+            </h1>
+            <p className="text-xs text-neutral-400 mt-0.5">
+              Registered: {new Date(job.created_at).toLocaleString()}
+            </p>
+          </div>
         </div>
+
+        {job.job_status === 'PENDING' && !job.customer_confirmed_at && (
+          <Link
+            href={`/dashboard/jobs/${job.id}/confirm`}
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5"
+          >
+            <Tablet className="w-4 h-4" />
+            <span>Show Customer for Confirmation</span>
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -135,6 +147,15 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                 <span className="text-neutral-500">Created:</span>
                 <span className="text-neutral-300">{new Date(job.created_at).toLocaleTimeString()}</span>
               </div>
+              {job.customer_confirmed_at && (
+                <div className="flex justify-between items-center text-emerald-400">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Customer Confirmed:</span>
+                  </span>
+                  <span>{new Date(job.customer_confirmed_at).toLocaleTimeString()}</span>
+                </div>
+              )}
               {job.started_at && (
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Started:</span>
@@ -163,6 +184,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             <JobStatusTransitions
               jobId={job.id}
               currentStatus={job.job_status}
+              customerConfirmedAt={job.customer_confirmed_at}
               userRole={userRole}
             />
           </div>

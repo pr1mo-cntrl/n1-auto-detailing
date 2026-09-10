@@ -37,6 +37,7 @@ export interface JobServiceDetail {
 }
 
 export interface JobDetail extends JobQueueItem {
+  customer_confirmed_at: string | null;
   started_at: string | null;
   completed_at: string | null;
   cancelled_at: string | null;
@@ -82,6 +83,7 @@ export async function getJobById(
       job_status,
       total_amount,
       notes,
+      customer_confirmed_at,
       started_at,
       completed_at,
       cancelled_at,

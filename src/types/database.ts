@@ -66,6 +66,7 @@ export interface Job {
   job_status: JobStatus;
   total_amount: number;
   notes: string | null;
+  customer_confirmed_at: string | null;
   started_at: string | null;
   completed_at: string | null;
   cancelled_at: string | null;
