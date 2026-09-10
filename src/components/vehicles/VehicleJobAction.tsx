@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { Vehicle } from '@/types/database';
-import { Play, X, Wrench, AlertCircle } from 'lucide-react';
+import { Play, X, Wrench, ArrowRight } from 'lucide-react';
 
 interface VehicleJobActionProps {
   vehicle: Vehicle;
@@ -63,21 +64,21 @@ export default function VehicleJobAction({ vehicle, customerName }: VehicleJobAc
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-neutral-800/50 border border-neutral-700/60 text-neutral-300 text-xs">
-                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <p>
-                  Prepare this vehicle for job intake in the upcoming Jobs module. Service selection, pricing matrices, and queue tracking will be implemented in Step 4.
-                </p>
-              </div>
-
-              <div className="flex justify-end pt-2 border-t border-neutral-800">
+              <div className="flex justify-end gap-2 pt-2 border-t border-neutral-800">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
                   className="px-4 py-2 text-xs font-medium text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors cursor-pointer"
                 >
-                  Close
+                  Cancel
                 </button>
+                <Link
+                  href={`/dashboard/jobs/new?vehicle_id=${vehicle.id}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors cursor-pointer shadow-xs"
+                >
+                  <span>Start Job Intake</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
           </div>
