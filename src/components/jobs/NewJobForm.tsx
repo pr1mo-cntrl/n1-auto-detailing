@@ -120,9 +120,9 @@ export default function NewJobForm({ vehicleId, services }: NewJobFormProps) {
       }
 
       if (partialFailure) {
-        router.push(`/dashboard/jobs/${newJobId}?warning=partial_services`);
+        router.push(`/dashboard/jobs/${newJobId}/confirm?warning=partial_services`);
       } else {
-        router.push(`/dashboard/jobs/${newJobId}`);
+        router.push(`/dashboard/jobs/${newJobId}/confirm`);
       }
     } catch (err: unknown) {
       const message =
