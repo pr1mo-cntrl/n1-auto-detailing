@@ -11,7 +11,10 @@ interface CustomersPageProps {
 export default async function CustomersPage({ searchParams }: CustomersPageProps) {
   const { q } = await searchParams;
   const query = q || '';
+  const t0 = performance.now();
   const customers = await searchCustomers(query);
+  const t1 = performance.now();
+  console.log(`[PERF][Customers Page Query] Took ${(t1 - t0).toFixed(2)}ms`);
 
   return (
     <div className="space-y-6">

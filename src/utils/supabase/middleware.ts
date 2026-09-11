@@ -28,11 +28,13 @@ export async function updateSession(request: NextRequest) {
       },
     }
   );
-
+  
+const t0 = performance.now();
 const {
   data: { user },
 } = await supabase.auth.getUser();
-
+const t1 = performance.now();
+console.log(`[PERF][Middleware:auth.getUser] Took ${(t1 - t0).toFixed(2)}ms | path: ${request.nextUrl.pathname}`);
 console.log('--- MIDDLEWARE RUN ---', {
   path: request.nextUrl.pathname,
   hasUser: !!user,
