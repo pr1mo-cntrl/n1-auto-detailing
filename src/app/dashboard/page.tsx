@@ -28,10 +28,10 @@ export default async function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
         <div className="space-y-2">
           <Image
-            src="/n1-logo.jpg"
+            src="/n1-logo.png"
             alt="N1 Auto Detailing"
-            width={180}
-            height={55}
+            width={220}
+            height={60}
             className="h-10 sm:h-12 w-auto object-contain"
             priority
           />
