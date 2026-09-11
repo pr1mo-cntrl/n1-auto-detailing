@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { addServiceToJob, removeServiceFromJob } from '@/actions/jobs';
-import { groupServicesByCategory, CATEGORY_METADATA } from '@/lib/data/services';
+import { groupServicesByCategory, CATEGORY_METADATA } from '@/lib/data/serviceCategories';
 import type { JobServiceDetail } from '@/lib/data/jobs';
 import type { Service, ServiceCategory, JobStatus, VehicleSize } from '@/types/database';
 import { Plus, Trash2, Loader2, AlertCircle, ShieldAlert, ChevronDown, ChevronRight } from 'lucide-react';

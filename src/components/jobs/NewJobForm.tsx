@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createJob, addServiceToJob } from '@/actions/jobs';
-import { groupServicesByCategory, CATEGORY_METADATA } from '@/lib/data/services';
+import { groupServicesByCategory, CATEGORY_METADATA } from '@/lib/data/serviceCategories';
 import type { Service, ServiceCategory } from '@/types/database';
 import { Check, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 
