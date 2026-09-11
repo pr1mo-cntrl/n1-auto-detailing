@@ -27,14 +27,9 @@ export default async function DashboardLayout({
             {/* Logo Brand Section */}
             <div className="flex items-center justify-between">
               <Link href="/dashboard" className="flex items-center group">
-                <Image
-                  src="/n1-logo.jpg"
-                  alt="N1 Auto Detailing"
-                  width={160}
-                  height={40}
-                  className="h-8 sm:h-9 w-auto object-contain brightness-95 group-hover:brightness-110 transition-all"
-                  priority
-                />
+                <span className="font-['Brush_Script_MT',cursive] text-2xl sm:text-3xl text-neutral-100 tracking-wide select-none group-hover:text-emerald-400 transition-colors italic">
+                  N1 Auto Detailing
+                </span>
               </Link>
 
               {/* Email badge shown only on mobile top-right */}

@@ -26,15 +26,10 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {/* Brand Hero & Quick Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-        <div className="space-y-2">
-          <Image
-            src="/n1-logo.jpg"
-            alt="N1 Auto Detailing"
-            width={220}
-            height={60}
-            className="h-10 sm:h-12 w-auto object-contain"
-            priority
-          />
+        <div className="space-y-1">
+          <h1 className="font-['Brush_Script_MT',cursive] text-4xl sm:text-5xl text-neutral-100 tracking-wide select-none italic">
+            N1 Auto Detailing
+          </h1>
           <p className="text-xs sm:text-sm italic font-medium tracking-wide text-neutral-400">
             &ldquo;Driven by Detail, Defined by Performance&rdquo;
           </p>
