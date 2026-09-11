@@ -5,6 +5,7 @@ import { getJobById } from '@/lib/data/jobs';
 import { getActiveServices } from '@/lib/data/services';
 import JobStatusTransitions from '@/components/jobs/JobStatusTransitions';
 import JobServicesManager from '@/components/jobs/JobServicesManager';
+import JobPaymentPanel from '@/components/jobs/JobPaymentPanel';
 import { ArrowLeft, Clock, AlertCircle, Tablet, CheckCircle2 } from 'lucide-react';
 import type { UserRole } from '@/types/database';
 
@@ -176,6 +177,12 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               )}
             </div>
           </div>
+
+          <JobPaymentPanel
+            jobId={job.id}
+            totalAmount={job.total_amount}
+            existingPayment={job.payment}
+          />
         </div>
 
         <div className="lg:col-span-2 space-y-6">
@@ -195,6 +202,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             totalAmount={job.total_amount}
             jobServices={job.job_services}
             availableServices={activeServices}
+            isPaid={!!job.payment}
           />
         </div>
       </div>

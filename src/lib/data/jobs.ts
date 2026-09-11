@@ -1,5 +1,13 @@
 import { createClient } from '@/utils/supabase/server';
-import type { Job, JobStatus, VehicleSize } from '@/types/database';
+import type { JobStatus, VehicleSize, PaymentMethod } from '@/types/database';
+
+export interface JobPaymentDetail {
+  id: string;
+  amount: number;
+  payment_method: PaymentMethod;
+  paid_at: string;
+  recorded_by?: string;
+}
 
 export interface JobQueueItem {
   id: string;
@@ -18,9 +26,10 @@ export interface JobQueueItem {
     id: string;
     make: string;
     model: string;
-    plate_number: string | null;
+    plate_number: string;
     size: VehicleSize;
   } | null;
+  payments: JobPaymentDetail | JobPaymentDetail[] | null;
 }
 
 export interface JobServiceDetail {
@@ -36,13 +45,14 @@ export interface JobServiceDetail {
   } | null;
 }
 
-export interface JobDetail extends JobQueueItem {
+export interface JobDetail extends Omit<JobQueueItem, 'payments'> {
   customer_confirmed_at: string | null;
   started_at: string | null;
   completed_at: string | null;
   cancelled_at: string | null;
   updated_at: string;
   job_services: JobServiceDetail[];
+  payment: JobPaymentDetail | null;
 }
 
 export async function getJobsQueue(): Promise<JobQueueItem[]> {
@@ -58,15 +68,16 @@ export async function getJobsQueue(): Promise<JobQueueItem[]> {
       notes,
       created_at,
       customer:customers(id, name, contact_number),
-      vehicle:vehicles(id, make, model, plate_number, size)
+      vehicle:vehicles(id, make, model, plate_number, size),
+      payments(id, amount, payment_method, paid_at)
     `)
-    .in('job_status', ['PENDING', 'QUEUED', 'IN_PROGRESS'])
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching jobs queue:', error);
+    console.error('Database query error in getJobsQueue:', error);
     return [];
   }
+
   return (data as unknown as JobQueueItem[]) || [];
 }
 
@@ -98,7 +109,8 @@ export async function getJobById(
         price_charged,
         created_at,
         service:services(id, name, description)
-      )
+      ),
+      payments(id, amount, payment_method, paid_at, recorded_by)
     `)
     .eq('id', id)
     .maybeSingle();
@@ -108,20 +120,19 @@ export async function getJobById(
     return { data: null, error: new Error(error.message) };
   }
 
-  return { data: (data as unknown as JobDetail) || null, error: null };
-}
-
-export async function getJobsByVehicleId(vehicleId: string): Promise<Job[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('jobs')
-    .select('*')
-    .eq('vehicle_id', vehicleId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching jobs by vehicle ID:', error);
-    return [];
+  if (!data) {
+    return { data: null, error: null };
   }
-  return data || [];
+
+  const rawPayments = (data as unknown as { payments: JobPaymentDetail | JobPaymentDetail[] | null }).payments;
+  const payment = Array.isArray(rawPayments)
+    ? rawPayments[0] || null
+    : rawPayments || null;
+
+  const jobDetail: JobDetail = {
+    ...(data as unknown as JobDetail),
+    payment,
+  };
+
+  return { data: jobDetail, error: null };
 }
