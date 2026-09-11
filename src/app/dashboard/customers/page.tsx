@@ -62,57 +62,88 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           )}
         </div>
       ) : (
-        <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-neutral-300">
-              <thead className="bg-neutral-950 text-xs text-neutral-400 uppercase tracking-wider border-b border-neutral-800">
-                <tr>
-                  <th scope="col" className="px-6 py-3.5">Customer Name</th>
-                  <th scope="col" className="px-6 py-3.5">Contact Number</th>
-                  <th scope="col" className="px-6 py-3.5">Registered Date</th>
-                  <th scope="col" className="px-6 py-3.5 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-800">
-                {customers.map((customer) => (
-                  <tr
-                    key={customer.id}
-                    className="hover:bg-neutral-800/40 transition-colors group"
-                  >
-                    <td className="px-6 py-4 font-medium text-neutral-100">
-                      {customer.name}
-                    </td>
-                    <td className="px-6 py-4 text-neutral-400">
-                      {customer.contact_number ? (
-                        <span className="flex items-center gap-1.5 font-mono text-xs text-neutral-300">
-                          <Phone className="w-3.5 h-3.5 text-neutral-500" />
-                          {customer.contact_number}
-                        </span>
-                      ) : (
-                        <span className="italic text-neutral-500 text-xs">None</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-xs text-neutral-400">
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-neutral-500" />
-                        {formatLocalDate(customer.created_at)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Link
-                        href={`/dashboard/customers/${customer.id}`}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
-                      >
-                        <span>View Fleet</span>
-                        <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Mobile View: Cards */}
+          <div className="grid grid-cols-1 gap-3 sm:hidden">
+            {customers.map((customer) => (
+              <Link
+                key={customer.id}
+                href={`/dashboard/customers/${customer.id}`}
+                className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex items-center justify-between hover:border-neutral-700 transition-colors"
+              >
+                <div className="space-y-1.5">
+                  <p className="font-medium text-neutral-100">{customer.name}</p>
+                  <div className="flex flex-col gap-1 text-xs text-neutral-400">
+                    <span className="flex items-center gap-1.5 font-mono text-neutral-300">
+                      <Phone className="w-3.5 h-3.5 text-neutral-500" />
+                      {customer.contact_number || <span className="italic text-neutral-500">No contact</span>}
+                    </span>
+                    <span className="flex items-center gap-1.5 text-neutral-400">
+                      <Calendar className="w-3.5 h-3.5 text-neutral-500" />
+                      {formatLocalDate(customer.created_at)}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs font-medium text-emerald-400">
+                  <ChevronRight className="w-5 h-5 text-neutral-500" />
+                </div>
+              </Link>
+            ))}
           </div>
-        </div>
+
+          {/* Desktop View: Full Table */}
+          <div className="hidden sm:block bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-neutral-300">
+                <thead className="bg-neutral-950 text-xs text-neutral-400 uppercase tracking-wider border-b border-neutral-800">
+                  <tr>
+                    <th scope="col" className="px-6 py-3.5">Customer Name</th>
+                    <th scope="col" className="px-6 py-3.5">Contact Number</th>
+                    <th scope="col" className="px-6 py-3.5">Registered Date</th>
+                    <th scope="col" className="px-6 py-3.5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-800">
+                  {customers.map((customer) => (
+                    <tr
+                      key={customer.id}
+                      className="hover:bg-neutral-800/40 transition-colors group"
+                    >
+                      <td className="px-6 py-4 font-medium text-neutral-100">
+                        {customer.name}
+                      </td>
+                      <td className="px-6 py-4 text-neutral-400">
+                        {customer.contact_number ? (
+                          <span className="flex items-center gap-1.5 font-mono text-xs text-neutral-300">
+                            <Phone className="w-3.5 h-3.5 text-neutral-500" />
+                            {customer.contact_number}
+                          </span>
+                        ) : (
+                          <span className="italic text-neutral-500 text-xs">None</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-neutral-400">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-neutral-500" />
+                          {formatLocalDate(customer.created_at)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Link
+                          href={`/dashboard/customers/${customer.id}`}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+                        >
+                          <span>View Fleet</span>
+                          <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
