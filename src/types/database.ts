@@ -163,3 +163,27 @@ export interface Payment {
   paid_at: string;
   created_at: string;
 } 
+
+export type ServiceCategory =
+  | 'PREMIUM_CARWASH'
+  | 'ADDITIONAL_SERVICES'
+  | 'INTERIOR_DETAILING'
+  | 'EXTERIOR_DETAILING'
+  | 'GLASS_DETAILING'
+  | 'UNDERBODY_DETAILING'
+  | 'PAINTLESS_DENT_REMOVAL'
+  | 'CERAMIC_COATING'
+  | 'PAINT_RESTORATION'
+  | 'PPF'
+  | 'WINDOW_TINT';
+
+export interface Service {
+  id: string;
+  name: string;
+  description: string | null;
+  pricing_type: ServicePricingType;
+  flat_price: number | null;
+  category: ServiceCategory;
+  active: boolean;
+  created_at: string;
+}

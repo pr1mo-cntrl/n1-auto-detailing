@@ -47,10 +47,12 @@ export default async function NewJobPage({ searchParams }: NewJobPageProps) {
 
   const supabase = await createClient();
 
-  // Fetch active catalog services along with their size-tiered price rows
+  // Fetch active catalog services with category and size-tiered pricing
   const { data: rawServices } = await supabase
     .from('services')
-    .select('id, name, description, pricing_type, flat_price, active, created_at, service_pricing(vehicle_size, price)')
+    .select(
+      'id, name, description, pricing_type, flat_price, category, active, created_at, service_pricing(vehicle_size, price)'
+    )
     .eq('active', true)
     .order('name');
 
@@ -64,7 +66,9 @@ export default async function NewJobPage({ searchParams }: NewJobPageProps) {
       resolvedPrice = s.flat_price !== null ? Number(s.flat_price) : 0;
     } else if (s.pricing_type === 'SIZE_TIERED') {
       const tierMatch = Array.isArray(s.service_pricing)
-        ? s.service_pricing.find((sp: { vehicle_size: string; price: number }) => sp.vehicle_size === vehicleSize)
+        ? s.service_pricing.find(
+            (sp: { vehicle_size: string; price: number }) => sp.vehicle_size === vehicleSize
+          )
         : null;
       resolvedPrice = tierMatch ? Number(tierMatch.price) : null;
     } else if (s.pricing_type === 'CUSTOM') {
@@ -77,6 +81,7 @@ export default async function NewJobPage({ searchParams }: NewJobPageProps) {
       description: s.description,
       pricing_type: s.pricing_type,
       flat_price: s.flat_price !== null ? Number(s.flat_price) : null,
+      category: s.category,
       active: s.active,
       created_at: s.created_at,
       price: resolvedPrice,
@@ -107,7 +112,8 @@ export default async function NewJobPage({ searchParams }: NewJobPageProps) {
               <User className="w-3.5 h-3.5" /> Customer
             </span>
             <span className="text-neutral-200 font-medium text-sm mt-0.5 block">
-              {(vehicle as { customer?: { name?: string; contact_number?: string } }).customer?.name || 'Unknown Customer'}
+              {(vehicle as { customer?: { name?: string; contact_number?: string } }).customer?.name ||
+                'Unknown Customer'}
             </span>
             {(vehicle as { customer?: { name?: string; contact_number?: string } }).customer?.contact_number && (
               <span className="text-neutral-400 font-mono block mt-0.5">
