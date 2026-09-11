@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getJobsQueue } from '@/lib/data/jobs';
 import { Plus, Clock, Car, User } from 'lucide-react';
+import { formatLocalTime } from '@/utils/formatDate';
 
 export default async function JobsQueuePage() {
   const jobs = await getJobsQueue();
@@ -85,11 +86,8 @@ export default async function JobsQueuePage() {
                       <span className="text-[11px] text-neutral-500 block flex items-center justify-end gap-1">
                         <Clock className="w-3 h-3" /> Time
                       </span>
-                      <span className="text-xs font-mono text-neutral-400">
-                        {new Date(job.created_at).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      <span className="font-mono text-neutral-200">
+                        {formatLocalTime(job.created_at)}
                       </span>
                     </div>
                   </div>

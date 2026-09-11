@@ -3,6 +3,7 @@ import { searchCustomers } from '@/lib/data/customers';
 import CustomerSearch from '@/components/customers/CustomerSearch';
 import AddCustomerModal from '@/components/customers/AddCustomerModal';
 import { Users, Phone, Calendar, ChevronRight, SearchX } from 'lucide-react';
+import { formatLocalDate } from '@/utils/formatDate';
 
 interface CustomersPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -11,10 +12,7 @@ interface CustomersPageProps {
 export default async function CustomersPage({ searchParams }: CustomersPageProps) {
   const { q } = await searchParams;
   const query = q || '';
-  const t0 = performance.now();
   const customers = await searchCustomers(query);
-  const t1 = performance.now();
-  console.log(`[PERF][Customers Page Query] Took ${(t1 - t0).toFixed(2)}ms`);
 
   return (
     <div className="space-y-6">
@@ -97,7 +95,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                     <td className="px-6 py-4 text-xs text-neutral-400">
                       <span className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-neutral-500" />
-                        {new Date(customer.created_at).toLocaleDateString()}
+                        {formatLocalDate(customer.created_at)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">

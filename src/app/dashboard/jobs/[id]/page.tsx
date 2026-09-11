@@ -8,6 +8,7 @@ import JobServicesManager from '@/components/jobs/JobServicesManager';
 import JobPaymentPanel from '@/components/jobs/JobPaymentPanel';
 import { ArrowLeft, Clock, AlertCircle, Tablet, CheckCircle2 } from 'lucide-react';
 import type { UserRole } from '@/types/database';
+import { formatLocalTime } from '@/utils/formatDate';
 
 interface JobDetailPageProps {
   params: Promise<{ id: string }>;
@@ -81,7 +82,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               </span>
             </h1>
             <p className="text-xs text-neutral-400 mt-0.5">
-              Registered: {new Date(job.created_at).toLocaleString()}
+              Registered: formatLocalDate(customer.created_at)
             </p>
           </div>
         </div>
@@ -146,7 +147,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-neutral-500">Created:</span>
-                <span className="text-neutral-300">{new Date(job.created_at).toLocaleTimeString()}</span>
+                <span className="text-neutral-300">{formatLocalTime(job.created_at)}</span>
               </div>
               {job.customer_confirmed_at && (
                 <div className="flex justify-between items-center text-emerald-400">
@@ -154,25 +155,25 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Customer Confirmed:</span>
                   </span>
-                  <span>{new Date(job.customer_confirmed_at).toLocaleTimeString()}</span>
+                  <span>{formatLocalTime(job.created_at)}</span>
                 </div>
               )}
               {job.started_at && (
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Started:</span>
-                  <span className="text-emerald-400">{new Date(job.started_at).toLocaleTimeString()}</span>
+                  <span className="text-emerald-400">{formatLocalTime(job.created_at)}</span>
                 </div>
               )}
               {job.completed_at && (
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Completed:</span>
-                  <span className="text-blue-400">{new Date(job.completed_at).toLocaleTimeString()}</span>
+                  <span className="text-blue-400">{formatLocalTime(job.created_at)}</span>
                 </div>
               )}
               {job.cancelled_at && (
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Cancelled:</span>
-                  <span className="text-red-400">{new Date(job.cancelled_at).toLocaleTimeString()}</span>
+                  <span className="text-red-400">{formatLocalTime(job.created_at)}</span>
                 </div>
               )}
             </div>
