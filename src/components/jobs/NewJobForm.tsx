@@ -6,8 +6,8 @@ import { createJob, addServiceToJob } from '@/actions/jobs';
 import type { Service } from '@/types/database';
 import { Check, Loader2 } from 'lucide-react';
 
-interface ServiceWithPrice extends Service {
-  price: number;
+export interface ServiceWithPrice extends Service {
+  price: number | null;
 }
 
 interface NewJobFormProps {
@@ -19,6 +19,7 @@ export default function NewJobForm({ vehicleId, services }: NewJobFormProps) {
   const router = useRouter();
   const [notes, setNotes] = useState('');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [customPrices, setCustomPrices] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -28,36 +29,67 @@ export default function NewJobForm({ vehicleId, services }: NewJobFormProps) {
     );
   };
 
+  const handleCustomPriceChange = (serviceId: string, value: string) => {
+    setCustomPrices((prev) => ({ ...prev, [serviceId]: value }));
+  };
+
   const calculatedTotal = services
     .filter((s) => selectedServices.includes(s.id))
-    .reduce((sum, s) => sum + s.price, 0);
+    .reduce((sum, s) => {
+      if (s.price !== null) {
+        return sum + s.price;
+      }
+      const entered = parseFloat(customPrices[s.id] || '0');
+      return sum + (isNaN(entered) ? 0 : entered);
+    }, 0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setIsSubmitting(true);
     setErrorMsg(null);
+
+    // Validate that all selected custom services have valid prices entered
+    for (const serviceId of selectedServices) {
+      const svc = services.find((s) => s.id === serviceId);
+      if (svc && svc.price === null) {
+        const val = parseFloat(customPrices[serviceId] || '');
+        if (isNaN(val) || val < 0) {
+          setErrorMsg(`Please enter a valid price for "${svc.name}".`);
+          return;
+        }
+      }
+    }
+
+    setIsSubmitting(true);
 
     try {
       // 1. Create the Job
       const jobRes = await createJob({ vehicle_id: vehicleId, notes });
       if (!jobRes.success) {
-        setErrorMsg(jobRes.error || 'Failed to initialize job.');
+        setErrorMsg('error' in jobRes ? (jobRes.error as string) : 'Failed to initialize job.');
         setIsSubmitting(false);
         return;
       }
 
-      if (!jobRes.data) {
-        setErrorMsg('Job creation did not return a valid record.');
+      const newJobId = jobRes.data?.id;
+      if (!newJobId) {
+        setErrorMsg('Failed to retrieve new job ID.');
         setIsSubmitting(false);
         return;
       }
-
-      const newJobId = jobRes.data.id;
 
       // 2. Add selected services
       let partialFailure = false;
       for (const serviceId of selectedServices) {
-        const sRes = await addServiceToJob({ job_id: newJobId, service_id: serviceId });
+        const svc = services.find((s) => s.id === serviceId);
+        const customPriceVal =
+          svc && svc.price === null ? parseFloat(customPrices[serviceId] || '0') : undefined;
+
+        const sRes = await addServiceToJob({
+          job_id: newJobId,
+          service_id: serviceId,
+          custom_price: customPriceVal,
+        });
+
         if (!sRes.success) {
           partialFailure = true;
         }
@@ -69,7 +101,8 @@ export default function NewJobForm({ vehicleId, services }: NewJobFormProps) {
         router.push(`/dashboard/jobs/${newJobId}`);
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred during submission.';
+      const message =
+        err instanceof Error ? err.message : 'An unexpected error occurred during submission.';
       setErrorMsg(message);
       setIsSubmitting(false);
     }
@@ -89,36 +122,65 @@ export default function NewJobForm({ vehicleId, services }: NewJobFormProps) {
         <div className="space-y-2">
           {services.map((s) => {
             const isSelected = selectedServices.includes(s.id);
+            const isCustom = s.price === null;
+
             return (
               <div
                 key={s.id}
-                onClick={() => !isSubmitting && toggleService(s.id)}
-                className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${
+                className={`p-3 rounded-lg border transition-colors ${
                   isSelected
                     ? 'bg-neutral-800/80 border-emerald-500/80 text-white'
                     : 'bg-neutral-950 border-neutral-800 text-neutral-300 hover:border-neutral-700'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className={`w-4 h-4 rounded flex items-center justify-center border ${
-                      isSelected
-                        ? 'bg-emerald-600 border-emerald-500 text-white'
-                        : 'border-neutral-700 bg-neutral-900'
-                    }`}
-                  >
-                    {isSelected && <Check className="w-3 h-3" />}
+                <div
+                  onClick={() => !isSubmitting && toggleService(s.id)}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className={`w-4 h-4 rounded flex items-center justify-center border ${
+                        isSelected
+                          ? 'bg-emerald-600 border-emerald-500 text-white'
+                          : 'border-neutral-700 bg-neutral-900'
+                      }`}
+                    >
+                      {isSelected && <Check className="w-3 h-3" />}
+                    </div>
+                    <div>
+                      <span className="font-medium text-neutral-100">{s.name}</span>
+                      {s.description && (
+                        <p className="text-[11px] text-neutral-500">{s.description}</p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium text-neutral-100">{s.name}</span>
-                    {s.description && (
-                      <p className="text-[11px] text-neutral-500">{s.description}</p>
-                    )}
-                  </div>
-                </div>
-                <span className="font-mono font-medium text-emerald-400">
-                  ₱{s.price.toFixed(2)}
+                  <span className="font-mono font-medium text-emerald-400 ml-4 shrink-0">
+                  {isCustom || s.price === null ? '[Custom Quote]' : `₱${s.price.toFixed(2)}`}
                 </span>
+                </div>
+
+                {/* Show custom price field if selected and custom-priced */}
+                {isSelected && isCustom && (
+                  <div
+                    className="mt-3 pt-2.5 border-t border-neutral-700/60 flex items-center gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <label className="text-[11px] text-neutral-400 shrink-0">
+                      Enter Quoted Price (₱):
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={customPrices[s.id] || ''}
+                      onChange={(e) => handleCustomPriceChange(s.id, e.target.value)}
+                      disabled={isSubmitting}
+                      className="w-32 bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+                      required
+                    />
+                  </div>
+                )}
               </div>
             );
           })}
