@@ -80,7 +80,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
             <Calendar className="w-4 h-4 text-neutral-500" />
             <span className="text-xs text-neutral-500 uppercase tracking-wider">Registered:</span>
             <span className="font-medium text-neutral-200">
-              {new Date(customer.created_at).toLocaleDateString()}
+              formatLocalDate(customer.created_at)
             </span>
           </div>
         </div>

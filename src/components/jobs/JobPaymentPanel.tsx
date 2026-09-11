@@ -89,7 +89,7 @@ export default function JobPaymentPanel({
             <div className="flex items-center justify-between text-xs">
               <span className="text-neutral-400">Recorded At:</span>
               <span className="font-mono text-neutral-300">
-                {new Date(existingPayment.paid_at).toLocaleString()}
+                formatLocalDate(customer.created_at)
               </span>
             </div>
           </div>
