@@ -13,6 +13,7 @@ export type ActionResponse<T = void> =
 export type UserRole = 'ADMIN' | 'STAFF';
 export type VehicleSize = 'SMALL' | 'MEDIUM' | 'LARGE' | 'X_LARGE' | 'UNKNOWN';
 export type JobStatus = 'PENDING' | 'QUEUED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type ServicePricingType = 'SIZE_TIERED' | 'FLAT' | 'CUSTOM';
 
 export interface Profile {
   id: string;
@@ -45,9 +46,10 @@ export interface Service {
   id: string;
   name: string;
   description: string | null;
+  pricing_type: ServicePricingType;
+  flat_price: number | null;
   active: boolean;
   created_at: string;
-  updated_at: string;
 }
 
 export interface ServicePricing {

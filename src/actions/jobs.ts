@@ -12,7 +12,7 @@ import {
   type UpdateJobStatusInput,
 } from '@/schemas/job';
 import { getServicePriceForSize } from '@/lib/data/services';
-import type { ActionResponse, Job, JobService } from '@/types/database';
+import type { ActionResponse, Job, JobService, VehicleSize } from '@/types/database';
 
 export async function createJob(input: CreateJobInput): Promise<ActionResponse<Job>> {
   const parsed = createJobSchema.safeParse(input);
@@ -50,51 +50,89 @@ export async function createJob(input: CreateJobInput): Promise<ActionResponse<J
   return { success: true, data: job };
 }
 
-export async function addServiceToJob(input: AddJobServiceInput): Promise<ActionResponse<JobService>> {
-  const parsed = addJobServiceSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message || 'Invalid input' };
+export async function addServiceToJob(
+  input: AddJobServiceInput
+): Promise<ActionResponse<JobService>> {
+  const validated = addJobServiceSchema.safeParse(input);
+  if (!validated.success) {
+    return { success: false, error: validated.error.issues[0]?.message || 'Invalid input.' };
   }
 
+  const { job_id, service_id, custom_price } = validated.data;
   const supabase = await createClient();
 
+  // 1. Fetch job and vehicle size
   const { data: job, error: jobErr } = await supabase
     .from('jobs')
     .select('id, vehicle_id, vehicle:vehicles(size)')
-    .eq('id', parsed.data.job_id)
+    .eq('id', job_id)
     .maybeSingle();
 
   if (jobErr || !job) {
-    return { success: false, error: 'Job not found' };
+    return { success: false, error: 'Job not found.' };
   }
 
-  const vehicleSize = (job.vehicle as unknown as { size: 'SMALL' | 'MEDIUM' | 'LARGE' | 'X_LARGE' | 'UNKNOWN' })?.size;
-  if (!vehicleSize) {
-    return { success: false, error: 'Unable to determine vehicle size' };
+  // 2. Fetch service to check pricing_type
+  const { data: service, error: svcErr } = await supabase
+    .from('services')
+    .select('id, name, pricing_type, flat_price')
+    .eq('id', service_id)
+    .maybeSingle();
+
+  if (svcErr || !service) {
+    return { success: false, error: 'Service not found.' };
   }
 
-  const priceCharged = await getServicePriceForSize(parsed.data.service_id, vehicleSize);
-  if (priceCharged === null) {
-    return { success: false, error: 'Price not configured for this vehicle size' };
+  const vehicleSize = ((job.vehicle as unknown) as { size: VehicleSize } | null)?.size || 'UNKNOWN';
+
+  let finalPrice: number;
+
+  if (service.pricing_type === 'CUSTOM') {
+    if (custom_price === undefined || custom_price === null) {
+      return {
+        success: false,
+        error: `A custom quoted price is required for "${service.name}".`,
+      };
+    }
+    finalPrice = custom_price;
+  } else {
+    // FLAT or SIZE_TIERED lookup
+    const catalogPrice = await getServicePriceForSize(service.id, vehicleSize);
+
+    if (catalogPrice !== null) {
+      // Authoritative catalog price found — ignore any client-submitted custom_price
+      finalPrice = catalogPrice;
+    } else {
+      // Fallback: No catalog price defined for this size (e.g. Premium Carwash for X_LARGE)
+      if (custom_price === undefined || custom_price === null) {
+        return {
+          success: false,
+          error: `No standard price defined for size [${vehicleSize}]. Please enter a custom price.`,
+        };
+      }
+      finalPrice = custom_price;
+    }
   }
 
-  const { data: lineItem, error: lineErr } = await supabase
+  // 3. Insert job_service line item
+  const { data: jobService, error: insertErr } = await supabase
     .from('job_services')
     .insert({
-      job_id: parsed.data.job_id,
-      service_id: parsed.data.service_id,
-      price_charged: priceCharged,
+      job_id,
+      service_id,
+      price_charged: finalPrice,
     })
     .select()
     .single();
 
-  if (lineErr) {
-    return { success: false, error: lineErr.message };
+  if (insertErr) {
+    return { success: false, error: insertErr.message };
   }
 
-  revalidatePath(`/dashboard/jobs/${parsed.data.job_id}`);
+  revalidatePath(`/dashboard/jobs/${job_id}`);
   revalidatePath('/dashboard/jobs');
-  return { success: true, data: lineItem };
+
+  return { success: true, data: jobService };
 }
 
 export async function removeServiceFromJob(jobServiceId: string): Promise<ActionResponse> {
@@ -137,7 +175,9 @@ export async function updateJobStatus(input: UpdateJobStatusInput): Promise<Acti
   const supabase = await createClient();
 
   if (parsed.data.new_status === 'CANCELLED') {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return { success: false, error: 'Authentication required' };
     }

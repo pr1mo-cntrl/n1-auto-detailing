@@ -8,6 +8,7 @@ export const createJobSchema = z.object({
 export const addJobServiceSchema = z.object({
   job_id: z.string().uuid('Valid job ID is required'),
   service_id: z.string().uuid('Valid service ID is required'),
+  custom_price: z.number().min(0, 'Price must be greater than or equal to 0').optional(),
 });
 
 export const updateJobStatusSchema = z.object({

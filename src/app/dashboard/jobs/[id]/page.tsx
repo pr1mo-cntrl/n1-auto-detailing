@@ -203,6 +203,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             jobServices={job.job_services}
             availableServices={activeServices}
             isPaid={!!job.payment}
+            vehicleSize={job.vehicle?.size}
           />
         </div>
       </div>
