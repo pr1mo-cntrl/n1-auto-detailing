@@ -28,7 +28,7 @@ export default async function DashboardLayout({
             <div className="flex items-center justify-between">
               <Link href="/dashboard" className="flex items-center group">
                 <Image
-                  src="/n1-logo.png"
+                  src="/n1-logo.jpg"
                   alt="N1 Auto Detailing"
                   width={160}
                   height={40}
