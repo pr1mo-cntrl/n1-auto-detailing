@@ -17,35 +17,32 @@ export default async function DashboardPage() {
     .from('profiles')
     .select('full_name, role')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
   return (
-    <main className="min-h-screen bg-zinc-950 p-8 text-zinc-100">
-      <div className="max-w-xl space-y-6 rounded-lg border border-zinc-800 bg-zinc-900 p-6">
-        <div>
-          <h1 className="text-xl font-bold">N1 Auto Detailing</h1>
-          <p className="text-xs text-zinc-400">Step 2C Verification View</p>
-        </div>
-
-        <div className="space-y-1 border-t border-zinc-800 pt-4 text-sm">
-          <p>
-            Welcome, <span className="font-semibold text-white">{profile?.full_name ?? 'Employee'}</span>
-          </p>
-          <p>
-            Assigned Role: <span className="font-semibold text-white">{profile?.role ?? 'STAFF'}</span>
-          </p>
-          <p className="text-emerald-400">Authentication is active and verified.</p>
-        </div>
-
-        <form action={logout}>
-          <button
-            type="submit"
-            className="rounded border border-zinc-700 bg-zinc-800 px-4 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-700"
-          >
-            Logout
-          </button>
-        </form>
+    <div className="max-w-xl space-y-6 rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+      <div>
+        <h1 className="text-xl font-bold text-white">N1 Auto Detailing</h1>
+        <p className="text-xs text-neutral-400">Dashboard Overview</p>
       </div>
-    </main>
+
+      <div className="space-y-1 border-t border-neutral-800 pt-4 text-sm">
+        <p>
+          Welcome, <span className="font-semibold text-white">{profile?.full_name ?? user.email}</span>
+        </p>
+        <p>
+          Assigned Role: <span className="font-semibold text-emerald-400">{profile?.role ?? 'STAFF'}</span>
+        </p>
+      </div>
+
+      <form action={logout}>
+        <button
+          type="submit"
+          className="rounded border border-neutral-700 bg-neutral-800 px-4 py-2 text-xs font-medium text-neutral-200 hover:bg-neutral-700 transition-colors"
+        >
+          Logout
+        </button>
+      </form>
+    </div>
   );
 }
