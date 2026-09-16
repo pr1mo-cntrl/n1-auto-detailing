@@ -6,9 +6,9 @@ import { getActiveServices } from '@/lib/data/services';
 import JobStatusTransitions from '@/components/jobs/JobStatusTransitions';
 import JobServicesManager from '@/components/jobs/JobServicesManager';
 import JobPaymentPanel from '@/components/jobs/JobPaymentPanel';
-import { ArrowLeft, Clock, AlertCircle, Tablet, CheckCircle2, } from 'lucide-react';
+import { ArrowLeft, Clock, AlertCircle, CheckCircle2, Printer } from 'lucide-react';
 import type { UserRole } from '@/types/database';
-import { formatLocalTime } from '@/utils/formatDate';
+import { formatLocalTime, formatLocalDate } from '@/utils/formatDate';
 
 interface JobDetailPageProps {
   params: Promise<{ id: string }>;
@@ -82,20 +82,21 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               </span>
             </h1>
             <p className="text-xs text-neutral-400 mt-0.5">
-              Registered: formatLocalDate(customer.created_at)
+              Registered: {job.created_at ? formatLocalDate(job.created_at) : 'Unknown'}
             </p>
           </div>
         </div>
 
-        {job.job_status === 'PENDING' && !job.customer_confirmed_at && (
+        {/* The new dedicated receipt button, always visible */}
+        <div className="flex gap-2">
           <Link
-            href={`/dashboard/jobs/${job.id}/confirm`}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5"
+            href={`/dashboard/jobs/${job.id}/receipt`}
+            className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5"
           >
-            <Tablet className="w-4 h-4" />
-            <span>Show Customer for Confirmation</span>
+            <Printer className="w-4 h-4" />
+            <span>View Receipt</span>
           </Link>
-        )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -155,25 +156,25 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Customer Confirmed:</span>
                   </span>
-                  <span>{formatLocalTime(job.created_at)}</span>
+                  <span>{formatLocalTime(job.customer_confirmed_at)}</span>
                 </div>
               )}
               {job.started_at && (
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Started:</span>
-                  <span className="text-emerald-400">{formatLocalTime(job.created_at)}</span>
+                  <span className="text-emerald-400">{formatLocalTime(job.started_at)}</span>
                 </div>
               )}
               {job.completed_at && (
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Completed:</span>
-                  <span className="text-blue-400">{formatLocalTime(job.created_at)}</span>
+                  <span className="text-blue-400">{formatLocalTime(job.completed_at)}</span>
                 </div>
               )}
               {job.cancelled_at && (
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Cancelled:</span>
-                  <span className="text-red-400">{formatLocalTime(job.created_at)}</span>
+                  <span className="text-red-400">{formatLocalTime(job.cancelled_at)}</span>
                 </div>
               )}
             </div>

@@ -1,222 +1,101 @@
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/utils/supabase/server';
-import { getJobById } from '@/lib/data/jobs';
-import { getActiveServices } from '@/lib/data/services';
-import JobStatusTransitions from '@/components/jobs/JobStatusTransitions';
-import JobServicesManager from '@/components/jobs/JobServicesManager';
-import JobPaymentPanel from '@/components/jobs/JobPaymentPanel';
-import { ArrowLeft, Clock, AlertCircle, Tablet, CheckCircle2, Printer } from 'lucide-react';
-import type { UserRole } from '@/types/database';
-import { formatLocalTime, formatLocalDate } from '@/utils/formatDate';
+import { getJobsQueue } from '@/lib/data/jobs';
+import { Plus, Clock, Car, User } from 'lucide-react';
+import { formatLocalTime } from '@/utils/formatDate';
 
-interface JobDetailPageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default async function JobDetailPage({ params }: JobDetailPageProps) {
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
-
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  if (!isUuid) {
-    notFound();
-  }
-
-  const { data: job, error } = await getJobById(id);
-
-  if (error) {
-    return (
-      <div className="p-6 bg-red-950/30 border border-red-800/50 rounded-xl text-red-300">
-        <div className="flex items-center gap-2 font-semibold">
-          <AlertCircle className="w-5 h-5 text-red-400" />
-          <span>Error loading job</span>
-        </div>
-        <p className="text-xs text-red-400/80 mt-1">{error.message}</p>
-        <Link
-          href="/dashboard/jobs"
-          className="inline-block mt-4 text-xs underline hover:text-red-200"
-        >
-          Return to Jobs Queue
-        </Link>
-      </div>
-    );
-  }
-
-  if (!job) {
-    notFound();
-  }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let userRole: UserRole = 'STAFF';
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (profile?.role === 'ADMIN') userRole = 'ADMIN';
-  }
-
-  const activeServices = await getActiveServices();
+export default async function JobsQueuePage() {
+  const jobs = await getJobsQueue();
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/jobs"
-            className="p-2 bg-neutral-900 border border-neutral-800 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold text-neutral-100 flex items-center gap-3">
-              <span>Job #{job.id.slice(0, 8)}</span>
-              <span className="text-xs px-2.5 py-0.5 rounded font-mono font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">
-                {job.job_status}
-              </span>
-            </h1>
-            <p className="text-xs text-neutral-400 mt-0.5">
-              Registered: {formatLocalDate(job.created_at)}
-            </p>
-          </div>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-xl font-bold text-neutral-100">Jobs Queue</h1>
+          <p className="text-xs text-neutral-400 mt-1">
+            Real-time shop floor and intake job tracking
+          </p>
         </div>
-
-        <div className="flex gap-2">
-          <Link
-            href={`/dashboard/jobs/${job.id}/receipt`}
-            className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5"
-          >
-            <Printer className="w-4 h-4" />
-            <span>View Receipt</span>
-          </Link>
-          
-          {job.job_status === 'PENDING' && !job.customer_confirmed_at && (
-            <Link
-              href={`/dashboard/jobs/${job.id}/confirm`}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5"
-            >
-              <Tablet className="w-4 h-4" />
-              <span>Show Customer for Confirmation</span>
-            </Link>
-          )}
-        </div>
+        <Link
+          href="/dashboard/jobs/new"
+          className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          <span>New Intake</span>
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="space-y-6">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-neutral-200 border-b border-neutral-800 pb-3">
-              Vehicle & Customer
-            </h2>
-            <div className="space-y-3 text-xs">
-              <div>
-                <span className="text-neutral-500 block">Customer</span>
-                <span className="text-neutral-200 font-medium text-sm">
-                  {job.customer ? job.customer.name : 'Unknown Customer'}
-                </span>
-                {job.customer?.contact_number && (
-                  <span className="text-neutral-400 block mt-0.5 font-mono">
-                    {job.customer.contact_number}
-                  </span>
-                )}
-              </div>
-              <div className="pt-2 border-t border-neutral-800/60">
-                <span className="text-neutral-500 block">Vehicle</span>
-                <span className="text-neutral-200 font-medium">
-                  {job.vehicle ? `${job.vehicle.make} ${job.vehicle.model}` : 'Unknown Vehicle'}
-                </span>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="font-mono text-neutral-400">
-                    {job.vehicle?.plate_number || 'No Plate'}
-                  </span>
-                  <span className="text-emerald-400 font-mono font-semibold">
-                    [{job.vehicle?.size}]
-                  </span>
-                </div>
-              </div>
-              {job.notes && (
-                <div className="pt-2 border-t border-neutral-800/60">
-                  <span className="text-neutral-500 block">Intake Notes</span>
-                  <p className="text-neutral-300 italic mt-0.5">{job.notes}</p>
-                </div>
-              )}
-            </div>
+      <div className="grid grid-cols-1 gap-3">
+        {jobs.length === 0 ? (
+          <div className="p-8 text-center bg-neutral-900 border border-neutral-800 rounded-xl text-neutral-500 text-xs">
+            No jobs in queue. Register a customer and vehicle to create an intake.
           </div>
+        ) : (
+          jobs.map((job) => {
+            const isPaid = Array.isArray(job.payments)
+              ? job.payments.length > 0
+              : !!job.payments;
 
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 space-y-3 text-xs">
-            <h2 className="text-sm font-semibold text-neutral-200 border-b border-neutral-800 pb-3 flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-neutral-400" />
-              <span>Timeline History</span>
-            </h2>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Created:</span>
-                <span className="text-neutral-300">{formatLocalTime(job.created_at)}</span>
-              </div>
-              {job.customer_confirmed_at && (
-                <div className="flex justify-between items-center text-emerald-400">
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Customer Confirmed:</span>
-                  </span>
-                  <span>{formatLocalTime(job.created_at)}</span>
-                </div>
-              )}
-              {job.started_at && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-500">Started:</span>
-                  <span className="text-emerald-400">{formatLocalTime(job.created_at)}</span>
-                </div>
-              )}
-              {job.completed_at && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-500">Completed:</span>
-                  <span className="text-blue-400">{formatLocalTime(job.created_at)}</span>
-                </div>
-              )}
-              {job.cancelled_at && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-500">Cancelled:</span>
-                  <span className="text-red-400">{formatLocalTime(job.created_at)}</span>
-                </div>
-              )}
-            </div>
-          </div>
+            return (
+              <Link
+                key={job.id}
+                href={`/dashboard/jobs/${job.id}`}
+                className="block p-4 bg-neutral-900 border border-neutral-800 hover:border-neutral-700 rounded-xl transition-all"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-semibold text-neutral-200">
+                        #{job.id.slice(0, 8)}
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">
+                        {job.job_status}
+                      </span>
+                      {isPaid ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-emerald-950/70 border border-emerald-800 text-emerald-300">
+                          PAID
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-amber-950/70 border border-amber-800 text-amber-300">
+                          UNPAID
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-neutral-400">
+                      <div className="flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-neutral-500" />
+                        <span>{job.customer?.name || 'Walk-in'}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Car className="w-3.5 h-3.5 text-neutral-500" />
+                        <span>
+                          {job.vehicle ? `${job.vehicle.make} ${job.vehicle.model}` : 'Vehicle'}{' '}
+                          <span className="font-mono text-emerald-400">[{job.vehicle?.size}]</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-          <JobPaymentPanel
-            jobId={job.id}
-            totalAmount={job.total_amount}
-            existingPayment={job.payment}
-          />
-        </div>
-
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-neutral-200 mb-3">Workflow Controls</h2>
-            <JobStatusTransitions
-              jobId={job.id}
-              currentStatus={job.job_status}
-              customerConfirmedAt={job.customer_confirmed_at}
-              userRole={userRole}
-            />
-          </div>
-
-          <JobServicesManager
-            jobId={job.id}
-            jobStatus={job.job_status}
-            totalAmount={job.total_amount}
-            jobServices={job.job_services}
-            availableServices={activeServices}
-            isPaid={!!job.payment}
-            vehicleSize={job.vehicle?.size}
-          />
-        </div>
+                  <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 pt-2 md:pt-0 border-neutral-800/80">
+                    <div className="text-right">
+                      <span className="text-[11px] text-neutral-500 block">Total Due</span>
+                      <span className="text-sm font-bold font-mono text-emerald-400">
+                        ₱{Number(job.total_amount).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="text-right hidden sm:block">
+                      <span className="text-[11px] text-neutral-500 block flex items-center justify-end gap-1">
+                        <Clock className="w-3 h-3" /> Time
+                      </span>
+                      <span className="font-mono text-neutral-200">
+                        {formatLocalTime(job.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })
+        )}
       </div>
     </div>
   );
