@@ -6,7 +6,7 @@ import { getActiveServices } from '@/lib/data/services';
 import JobStatusTransitions from '@/components/jobs/JobStatusTransitions';
 import JobServicesManager from '@/components/jobs/JobServicesManager';
 import JobPaymentPanel from '@/components/jobs/JobPaymentPanel';
-import { ArrowLeft, Clock, AlertCircle, Tablet, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Clock, AlertCircle, Tablet, CheckCircle2, } from 'lucide-react';
 import type { UserRole } from '@/types/database';
 import { formatLocalTime } from '@/utils/formatDate';
 
