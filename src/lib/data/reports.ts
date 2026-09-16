@@ -105,3 +105,90 @@ export async function getEarningsSummary(
     categoryBreakdown,
   };
 }
+
+export interface DetailedPaymentRecord {
+  id: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  paidAt: string;
+  jobId: string;
+  customerName: string;
+  plateNumber: string;
+  servicesList: string;
+}
+
+interface PaymentJoinRow {
+  id: string;
+  amount: number;
+  payment_method: PaymentMethod;
+  paid_at: string;
+  job_id: string;
+  jobs: {
+    customers: { name: string } | null;
+    vehicles: { plate_number: string | null } | null;
+    job_services: Array<{
+      services: { name: string } | null;
+    }> | null;
+  } | null;
+}
+
+export async function getDetailedPayments(
+  startIsoDate: string,
+  endIsoDate: string,
+  methodFilter?: PaymentMethod
+): Promise<DetailedPaymentRecord[]> {
+  const supabase = await createClient();
+
+  const rangeStartUtc = new Date(`${startIsoDate}T00:00:00+08:00`).toISOString();
+  const rangeEndUtc = new Date(`${endIsoDate}T23:59:59.999+08:00`).toISOString();
+
+  let query = supabase
+    .from('payments')
+    .select(`
+      id,
+      amount,
+      payment_method,
+      paid_at,
+      job_id,
+      jobs (
+        customers ( name ),
+        vehicles ( plate_number ),
+        job_services (
+          services ( name )
+        )
+      )
+    `)
+    .gte('paid_at', rangeStartUtc)
+    .lte('paid_at', rangeEndUtc)
+    .order('paid_at', { ascending: false });
+
+  if (methodFilter) {
+    query = query.eq('payment_method', methodFilter);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(`Failed to fetch detailed payments: ${error.message}`);
+
+  const rows = (data ?? []) as unknown as PaymentJoinRow[];
+
+  return rows.map((row) => {
+    const job = row.jobs;
+    const customer = job?.customers?.name ?? 'Walk-in';
+    const plate = job?.vehicles?.plate_number ?? 'N/A';
+    const services = (job?.job_services ?? [])
+      .map((js) => js.services?.name)
+      .filter((name): name is string => Boolean(name))
+      .join(', ');
+
+    return {
+      id: row.id,
+      amount: Number(row.amount),
+      paymentMethod: row.payment_method,
+      paidAt: row.paid_at,
+      jobId: row.job_id,
+      customerName: customer,
+      plateNumber: plate,
+      servicesList: services || 'Standard Detailing',
+    };
+  });
+}
