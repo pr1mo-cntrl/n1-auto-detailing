@@ -17,6 +17,7 @@ export interface JobQueueItem {
   total_amount: number;
   notes: string | null;
   created_at: string;
+  bay_location: string | null;
   customer: {
     id: string;
     name: string;
@@ -53,6 +54,7 @@ export interface JobDetail extends Omit<JobQueueItem, 'payments'> {
   updated_at: string;
   job_services: JobServiceDetail[];
   payment: JobPaymentDetail | null;
+  bay_location: string | null;
 }
 
 export async function getJobsQueue(): Promise<JobQueueItem[]> {
@@ -67,6 +69,7 @@ export async function getJobsQueue(): Promise<JobQueueItem[]> {
       total_amount,
       notes,
       created_at,
+      bay_location,
       customer:customers(id, name, contact_number),
       vehicle:vehicles(id, make, model, plate_number, size),
       payments(id, amount, payment_method, paid_at)
@@ -100,6 +103,7 @@ export async function getJobById(
       cancelled_at,
       created_at,
       updated_at,
+      bay_location,
       customer:customers(id, name, contact_number),
       vehicle:vehicles(id, make, model, plate_number, size),
       job_services(
@@ -135,4 +139,23 @@ export async function getJobById(
   };
 
   return { data: jobDetail, error: null };
+}
+
+// Update the physical bay location of a job
+export async function updateJobBay(jobId: string, bayLocation: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('jobs')
+    .update({ bay_location: bayLocation })
+    .eq('id', jobId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating bay location:', error);
+    throw new Error(error.message);
+  }
+
+  return data;
 }

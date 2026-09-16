@@ -9,6 +9,7 @@ import JobPaymentPanel from '@/components/jobs/JobPaymentPanel';
 import { ArrowLeft, Clock, AlertCircle, CheckCircle2, Printer } from 'lucide-react';
 import type { UserRole } from '@/types/database';
 import { formatLocalTime, formatLocalDate } from '@/utils/formatDate';
+import BayLocationManager from '@/components/jobs/BayLocationManager';
 
 interface JobDetailPageProps {
   params: Promise<{ id: string }>;
@@ -80,6 +81,8 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               <span className="text-xs px-2.5 py-0.5 rounded font-mono font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">
                 {job.job_status}
               </span>
+
+              <BayLocationManager jobId={job.id} currentBay={job.bay_location} />
             </h1>
             <p className="text-xs text-neutral-400 mt-0.5">
               Registered: {job.created_at ? formatLocalDate(job.created_at) : 'Unknown'}

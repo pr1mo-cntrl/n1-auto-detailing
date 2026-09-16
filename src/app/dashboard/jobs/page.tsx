@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getJobsQueue } from '@/lib/data/jobs';
-import { Plus, Clock, Car, User } from 'lucide-react';
+import { Plus, Clock, Car, User, MapPin } from 'lucide-react';
 import { formatLocalTime } from '@/utils/formatDate';
 
 export default async function JobsQueuePage() {
@@ -50,6 +50,13 @@ export default async function JobsQueuePage() {
                       <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">
                         {job.job_status}
                       </span>
+
+                      {/* NEW: Bay Location Badge */}
+                      <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-semibold bg-blue-950/70 border border-blue-800 text-blue-300">
+                        <MapPin className="w-3 h-3" />
+                        {job.bay_location || 'Pending Intake'}
+                      </span>
+
                       {isPaid ? (
                         <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-emerald-950/70 border border-emerald-800 text-emerald-300">
                           PAID
