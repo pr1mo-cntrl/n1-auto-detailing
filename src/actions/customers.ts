@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/server';
 import { createCustomerSchema, updateCustomerSchema } from '@/schemas/customer';
 import type { ActionResponse, Customer } from '@/types/database';
 
-export async function createCustomer(rawInput: unknown): Promise<ActionResponse<Customer>> {
+  export async function createCustomer(rawInput: unknown): Promise<ActionResponse<Customer>> {
   const supabase = await createClient();
 
   const {
@@ -26,17 +26,19 @@ export async function createCustomer(rawInput: unknown): Promise<ActionResponse<
 
   const { name, contact_number } = parseResult.data;
 
-  // --- NEW LOGIC: FIND OR CREATE (Anti-Duplication) ---
-  
+  // --- NEW: Normalize the phone number (Strip everything except numbers) ---
+  // Example: "+63 917-123-4567" becomes "639171234567"
+  const cleanPhone = contact_number ? contact_number.replace(/\D/g, '') : null;
+
   // 1. Build a search query to find an exact match
   let query = supabase
     .from('customers')
     .select('id, name, contact_number, created_at')
     .ilike('name', name); // Case-insensitive match (e.g., "John" == "john")
 
-  // If a phone number was provided, match it exactly. Otherwise, ensure it is null.
-  if (contact_number) {
-    query = query.eq('contact_number', contact_number);
+  // Match the CLEANED phone number
+  if (cleanPhone) {
+    query = query.eq('contact_number', cleanPhone);
   } else {
     query = query.is('contact_number', null);
   }
@@ -53,7 +55,7 @@ export async function createCustomer(rawInput: unknown): Promise<ActionResponse<
     .from('customers')
     .insert({
       name: name,
-      contact_number: contact_number,
+      contact_number: cleanPhone, // Save the cleaned version to the database!
     })
     .select('id, name, contact_number, created_at')
     .single();
@@ -107,4 +109,34 @@ export async function updateCustomer(
 
   revalidatePath('/dashboard');
   return { success: true, data: data as Customer };
+}
+
+export async function searchCustomersForIntake(searchQuery: string) {
+  const supabase = await createClient();
+  
+  if (!searchQuery || searchQuery.trim().length < 2) {
+    return { success: true, data: [] };
+  }
+
+  // Clean the query just in case they are searching by phone number
+  const cleanPhoneQuery = searchQuery.replace(/\D/g, '');
+
+  // Search by name OR phone number
+  let orString = `name.ilike.%${searchQuery}%`;
+  if (cleanPhoneQuery) {
+    orString += `,contact_number.ilike.%${cleanPhoneQuery}%`;
+  }
+
+  const { data, error } = await supabase
+    .from('customers')
+    .select('id, name, contact_number')
+    .or(orString)
+    .limit(5); // Keep it fast, only show top 5 matches
+
+  if (error) {
+    console.error('[searchCustomersForIntake] error:', error.message);
+    return { success: false, data: [] };
+  }
+
+  return { success: true, data };
 }

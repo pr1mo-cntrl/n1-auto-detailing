@@ -16,7 +16,7 @@ export default async function JobsQueuePage() {
           </p>
         </div>
         <Link
-          href="/dashboard/jobs/new"
+          href="/dashboard/customers"
           className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -82,7 +82,7 @@ export default async function JobsQueuePage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 pt-2 md:pt-0 border-neutral-800/80">
+                  <div className="flex items-center justify-end gap-6 border-t md:border-t-0 pt-3 md:pt-0 mt-3 md:mt-0 border-neutral-800/80">
                     <div className="text-right">
                       <span className="text-[11px] text-neutral-500 block">Total Due</span>
                       <span className="text-sm font-bold font-mono text-emerald-400">
