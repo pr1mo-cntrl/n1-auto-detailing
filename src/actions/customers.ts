@@ -24,11 +24,36 @@ export async function createCustomer(rawInput: unknown): Promise<ActionResponse<
     };
   }
 
+  const { name, contact_number } = parseResult.data;
+
+  // --- NEW LOGIC: FIND OR CREATE (Anti-Duplication) ---
+  
+  // 1. Build a search query to find an exact match
+  let query = supabase
+    .from('customers')
+    .select('id, name, contact_number, created_at')
+    .ilike('name', name); // Case-insensitive match (e.g., "John" == "john")
+
+  // If a phone number was provided, match it exactly. Otherwise, ensure it is null.
+  if (contact_number) {
+    query = query.eq('contact_number', contact_number);
+  } else {
+    query = query.is('contact_number', null);
+  }
+
+  const { data: existingCustomer } = await query.limit(1).maybeSingle();
+
+  // 2. If they already exist in the system, seamlessly return their existing profile!
+  if (existingCustomer) {
+    return { success: true, data: existingCustomer as Customer };
+  }
+
+  // 3. If no match is found, safely create a brand new customer
   const { data, error } = await supabase
     .from('customers')
     .insert({
-      name: parseResult.data.name,
-      contact_number: parseResult.data.contact_number,
+      name: name,
+      contact_number: contact_number,
     })
     .select('id, name, contact_number, created_at')
     .single();

@@ -3,19 +3,21 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createCustomer } from '@/actions/customers';
-import { UserPlus, X, Loader2 } from 'lucide-react';
+import { UserPlus, X, Loader2, CheckCircle2 } from 'lucide-react';
 
 export default function AddCustomerModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
 
     startTransition(async () => {
       const result = await createCustomer({
@@ -24,14 +26,36 @@ export default function AddCustomerModal() {
       });
 
       if (!result.success) {
-        setError(result.error);
+        setError(result.error || 'Something went wrong.');
         return;
       }
 
-      setIsOpen(false);
-      setName('');
-      setContactNumber('');
-      if (result.data) {
+      if (!result.data) {
+        setError('No customer data returned.');
+        return;
+      }
+
+      // Check if the customer profile is old (existing) or brand new
+      const customerAge = Date.now() - new Date(result.data.created_at).getTime();
+      const isExisting = customerAge > 5000; // Older than 5 seconds means it already existed
+
+      if (isExisting) {
+        // Show the friendly notification
+        setSuccessMessage(`Existing profile found! Linking to ${result.data.name}'s account...`);
+        
+        // Wait 2 seconds so the staff can read the message, then redirect
+        setTimeout(() => {
+          setIsOpen(false);
+          setName('');
+          setContactNumber('');
+          setSuccessMessage(null);
+          router.push(`/dashboard/customers/${result.data?.id}`);
+        }, 2000);
+      } else {
+        // Brand new customer: close and redirect immediately
+        setIsOpen(false);
+        setName('');
+        setContactNumber('');
         router.push(`/dashboard/customers/${result.data.id}`);
       }
     });
@@ -54,7 +78,7 @@ export default function AddCustomerModal() {
               <h3 className="text-base font-semibold text-neutral-100">Add New Customer</h3>
               <button
                 onClick={() => setIsOpen(false)}
-                disabled={isPending}
+                disabled={isPending || !!successMessage}
                 className="text-neutral-400 hover:text-neutral-200 cursor-pointer disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
@@ -62,9 +86,18 @@ export default function AddCustomerModal() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Error Message */}
               {error && (
                 <div className="p-3 text-xs bg-red-950/60 border border-red-800 text-red-300 rounded-lg">
                   {error}
+                </div>
+              )}
+
+              {/* NEW: Success Notification */}
+              {successMessage && (
+                <div className="flex items-start gap-2 p-3 text-xs bg-emerald-950/60 border border-emerald-800 text-emerald-300 rounded-lg animate-in fade-in slide-in-from-top-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span className="font-medium">{successMessage}</span>
                 </div>
               )}
 
@@ -77,7 +110,7 @@ export default function AddCustomerModal() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  disabled={isPending}
+                  disabled={isPending || !!successMessage}
                   placeholder="e.g. John Doe"
                   className="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-hidden focus:border-neutral-600 disabled:opacity-50"
                 />
@@ -91,7 +124,7 @@ export default function AddCustomerModal() {
                   type="tel"
                   value={contactNumber}
                   onChange={(e) => setContactNumber(e.target.value)}
-                  disabled={isPending}
+                  disabled={isPending || !!successMessage}
                   placeholder="e.g. 09171234567"
                   className="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-hidden focus:border-neutral-600 disabled:opacity-50"
                 />
@@ -101,14 +134,14 @@ export default function AddCustomerModal() {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  disabled={isPending}
+                  disabled={isPending || !!successMessage}
                   className="px-4 py-2 text-xs font-medium text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending}
+                  disabled={isPending || !!successMessage}
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? (

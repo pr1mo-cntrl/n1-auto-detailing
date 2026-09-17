@@ -8,6 +8,7 @@ import EditVehicleModal from '@/components/vehicles/EditVehicleModal';
 import VehicleJobAction from '@/components/vehicles/VehicleJobAction';
 import { ArrowLeft, User, Phone, Calendar, Car, Hash } from 'lucide-react';
 import type { VehicleSize } from '@/types/database';
+import { formatLocalDate } from '@/utils/formatDate';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -80,7 +81,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
             <Calendar className="w-4 h-4 text-neutral-500" />
             <span className="text-xs text-neutral-500 uppercase tracking-wider">Registered:</span>
             <span className="font-medium text-neutral-200">
-              formatLocalDate(customer.created_at)
+              {formatLocalDate(customer.created_at)}
             </span>
           </div>
         </div>
