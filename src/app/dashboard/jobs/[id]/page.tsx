@@ -67,34 +67,38 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      
+      {/* HEADER SECTION - Now Responsive */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        
+        {/* Left Side: Back Button & Title */}
+        <div className="flex items-start md:items-center gap-3">
           <Link
             href="/dashboard/jobs"
-            className="p-2 bg-neutral-900 border border-neutral-800 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+            className="p-2 bg-neutral-900 border border-neutral-800 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors shrink-0 mt-1 md:mt-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-neutral-100 flex items-center gap-3">
+            {/* flex-wrap ensures badges drop to the next line on small screens */}
+            <h1 className="text-xl font-bold text-neutral-100 flex flex-wrap items-center gap-2 md:gap-3">
               <span>Job #{job.id.slice(0, 8)}</span>
               <span className="text-xs px-2.5 py-0.5 rounded font-mono font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">
                 {job.job_status}
               </span>
-
               <BayLocationManager jobId={job.id} currentBay={job.bay_location} />
             </h1>
-            <p className="text-xs text-neutral-400 mt-0.5">
+            <p className="text-xs text-neutral-400 mt-1 md:mt-0.5">
               Registered: {job.created_at ? formatLocalDate(job.created_at) : 'Unknown'}
             </p>
           </div>
         </div>
 
-        {/* The new dedicated receipt button, always visible */}
-        <div className="flex gap-2">
+        {/* Right Side: View Receipt Button */}
+        <div className="flex w-full md:w-auto">
           <Link
             href={`/dashboard/jobs/${job.id}/receipt`}
-            className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5"
+            className="w-full md:w-auto justify-center px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5"
           >
             <Printer className="w-4 h-4" />
             <span>View Receipt</span>

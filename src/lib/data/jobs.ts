@@ -7,6 +7,7 @@ export interface JobPaymentDetail {
   payment_method: PaymentMethod;
   paid_at: string;
   recorded_by?: string;
+  created_at: string;
 }
 
 export interface JobQueueItem {
@@ -114,7 +115,7 @@ export async function getJobById(
         created_at,
         service:services(id, name, description)
       ),
-      payments(id, amount, payment_method, paid_at, recorded_by)
+      payments(id, amount, payment_method, paid_at, recorded_by, created_at)
     `)
     .eq('id', id)
     .maybeSingle();

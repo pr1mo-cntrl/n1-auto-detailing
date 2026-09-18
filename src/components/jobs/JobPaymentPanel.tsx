@@ -5,6 +5,7 @@ import { recordPayment } from '@/actions/payments';
 import type { PaymentMethod } from '@/types/database';
 import type { JobPaymentDetail } from '@/lib/data/jobs';
 import { CreditCard, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { formatLocalTime } from '@/utils/formatDate';
 
 interface JobPaymentPanelProps {
   jobId: string;
@@ -89,7 +90,7 @@ export default function JobPaymentPanel({
             <div className="flex items-center justify-between text-xs">
               <span className="text-neutral-400">Recorded At:</span>
               <span className="font-mono text-neutral-300">
-                formatLocalDate(customer.created_at)
+                {formatLocalTime(existingPayment.created_at)}
               </span>
             </div>
           </div>
