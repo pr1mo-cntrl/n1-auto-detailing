@@ -3,12 +3,34 @@ import { getJobsQueue } from '@/lib/data/jobs';
 import { Plus, Clock, Car, User, MapPin } from 'lucide-react';
 import { formatLocalTime } from '@/utils/formatDate';
 
-export default async function JobsQueuePage() {
-  const jobs = await getJobsQueue();
+interface JobsQueuePageProps {
+  searchParams: Promise<{ view?: string }>;
+}
+
+export default async function JobsQueuePage({ searchParams }: JobsQueuePageProps) {
+  // Await search params for Next.js 15+ compatibility
+  const resolvedParams = await searchParams;
+  const currentView = resolvedParams?.view || 'active';
+
+  const allJobs = await getJobsQueue();
+
+  // Filter jobs based on the current view
+  const displayJobs = allJobs.filter((job) => {
+    const isPaid = Array.isArray(job.payments)
+      ? job.payments.length > 0
+      : !!job.payments;
+    const isCompleted = job.job_status === 'COMPLETED';
+    const isFinished = isPaid && isCompleted;
+
+    if (currentView === 'history') {
+      return isFinished; // Show ONLY finished jobs
+    }
+    return !isFinished; // Show active jobs
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-4">
         <div>
           <h1 className="text-xl font-bold text-neutral-100">Jobs Queue</h1>
           <p className="text-xs text-neutral-400 mt-1">
@@ -17,20 +39,46 @@ export default async function JobsQueuePage() {
         </div>
         <Link
           href="/dashboard/customers"
-          className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+          className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>New Intake</span>
         </Link>
       </div>
 
+      {/* Toggle Switch */}
+      <div className="flex bg-neutral-900/50 p-1 rounded-lg w-fit border border-neutral-800">
+        <Link
+          href="/dashboard/jobs?view=active"
+          className={`px-5 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+            currentView !== 'history'
+              ? 'bg-neutral-800 text-neutral-100 shadow-sm'
+              : 'text-neutral-500 hover:text-neutral-300'
+          }`}
+        >
+          Active Queue
+        </Link>
+        <Link
+          href="/dashboard/jobs?view=history"
+          className={`px-5 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+            currentView === 'history'
+              ? 'bg-neutral-800 text-neutral-100 shadow-sm'
+              : 'text-neutral-500 hover:text-neutral-300'
+          }`}
+        >
+          History
+        </Link>
+      </div>
+
       <div className="grid grid-cols-1 gap-3">
-        {jobs.length === 0 ? (
+        {displayJobs.length === 0 ? (
           <div className="p-8 text-center bg-neutral-900 border border-neutral-800 rounded-xl text-neutral-500 text-xs">
-            No jobs in queue. Register a customer and vehicle to create an intake.
+            {currentView === 'history' 
+              ? 'No completed jobs in history.' 
+              : 'No active jobs in queue. Register a customer and vehicle to create an intake.'}
           </div>
         ) : (
-          jobs.map((job) => {
+          displayJobs.map((job) => {
             const isPaid = Array.isArray(job.payments)
               ? job.payments.length > 0
               : !!job.payments;
@@ -39,7 +87,9 @@ export default async function JobsQueuePage() {
               <Link
                 key={job.id}
                 href={`/dashboard/jobs/${job.id}`}
-                className="block p-4 bg-neutral-900 border border-neutral-800 hover:border-neutral-700 rounded-xl transition-all"
+                className={`block p-4 bg-neutral-900 border hover:border-neutral-700 rounded-xl transition-all ${
+                  currentView === 'history' ? 'border-neutral-800/50 opacity-80 hover:opacity-100' : 'border-neutral-800'
+                }`}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1.5">
@@ -51,7 +101,6 @@ export default async function JobsQueuePage() {
                         {job.job_status}
                       </span>
 
-                      {/* NEW: Bay Location Badge */}
                       <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-semibold bg-blue-950/70 border border-blue-800 text-blue-300">
                         <MapPin className="w-3 h-3" />
                         {job.bay_location || 'Pending Intake'}

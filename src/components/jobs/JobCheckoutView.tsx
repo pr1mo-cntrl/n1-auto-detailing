@@ -3,11 +3,12 @@
 import { Printer, ArrowLeft, CheckCircle2, Receipt } from 'lucide-react';
 import Link from 'next/link';
 
-// 1. Define the exact shape of the job data
+// 1. Updated interface to anticipate Supabase arrays or singular aliases
 interface CheckoutJobService {
   id: string;
   price_charged: number;
-  services: { name: string } | null;
+  services?: { name: string } | { name: string }[] | null;
+  service?: { name: string } | null;
 }
 
 interface CheckoutJobDetails {
@@ -20,7 +21,6 @@ interface CheckoutJobDetails {
   payment: { amount: number; payment_method: string } | null;
 }
 
-// 2. Use the interface instead of 'any'
 export default function JobCheckoutView({ job }: { job: CheckoutJobDetails }) {
   const handlePrint = () => {
     window.print();
@@ -38,9 +38,17 @@ export default function JobCheckoutView({ job }: { job: CheckoutJobDetails }) {
 
   const isPaid = !!job.payment;
 
+  // Helper to safely extract the name regardless of Supabase's return shape
+  const getServiceName = (js: CheckoutJobService) => {
+    if (Array.isArray(js.services)) return js.services[0]?.name;
+    if (js.services && !Array.isArray(js.services)) return js.services.name;
+    if (js.service) return js.service.name;
+    return 'Unknown Service';
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Action Bar (Hidden on Print) */}
+      {/* Action Bar */}
       <div className="flex items-center justify-between print:hidden">
         <Link
           href={`/dashboard/jobs/${job.id}`}
@@ -51,14 +59,14 @@ export default function JobCheckoutView({ job }: { job: CheckoutJobDetails }) {
         </Link>
         <button
           onClick={handlePrint}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-white text-neutral-900 font-semibold rounded-lg text-sm transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-white text-neutral-900 font-semibold rounded-lg text-sm transition-colors cursor-pointer"
         >
           <Printer className="w-4 h-4" />
           Print Receipt
         </button>
       </div>
 
-      {/* Screen View (Hidden on Print) */}
+      {/* Screen View */}
       <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden print:hidden">
         <div className="p-6 border-b border-neutral-800 flex justify-between items-start">
           <div>
@@ -97,10 +105,9 @@ export default function JobCheckoutView({ job }: { job: CheckoutJobDetails }) {
         <div className="p-6">
           <p className="text-xs text-neutral-500 font-medium uppercase tracking-wider mb-4">Services Rendered</p>
           <div className="space-y-3">
-            {/* 3. Removed 'any' from (js) here because TypeScript now knows it's a CheckoutJobService */}
             {job.job_services?.map((js) => (
               <div key={js.id} className="flex justify-between items-center text-sm">
-                <span className="text-neutral-300">{js.services?.name}</span>
+                <span className="text-neutral-300">{getServiceName(js)}</span>
                 <span className="font-mono text-neutral-200">{formatCurrency(js.price_charged)}</span>
               </div>
             ))}
@@ -113,12 +120,7 @@ export default function JobCheckoutView({ job }: { job: CheckoutJobDetails }) {
         </div>
       </div>
 
-      {/* 
-        ----------------------------------------------------
-        PRINT VIEW (Receipt Format)
-        Only visible when printing. Formatted for 80mm thermal or A4.
-        ----------------------------------------------------
-      */}
+      {/* PRINT VIEW */}
       <div className="hidden print:block text-black bg-white w-full max-w-[80mm] mx-auto text-sm font-sans">
         <div className="text-center mb-4">
           <h2 className="text-xl font-bold uppercase tracking-tight">N1 Auto Detailing</h2>
@@ -143,10 +145,9 @@ export default function JobCheckoutView({ job }: { job: CheckoutJobDetails }) {
               </tr>
             </thead>
             <tbody>
-              {/* 4. Removed 'any' here as well */}
               {job.job_services?.map((js) => (
                 <tr key={js.id}>
-                  <td className="py-1 pr-2 break-words">{js.services?.name}</td>
+                  <td className="py-1 pr-2 break-words">{getServiceName(js)}</td>
                   <td className="py-1 text-right whitespace-nowrap">{formatCurrency(js.price_charged)}</td>
                 </tr>
               ))}
